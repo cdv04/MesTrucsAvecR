@@ -1,0 +1,87 @@
+---
+title: "MetaProgrammation"
+author: "Claire Della Vedova"
+date: "26 septembre 2017"
+output: html_document
+---
+
+
+
+
+A partir du document 
+
+<http://archimede.mat.ulaval.ca/dokuwiki/lib/exe/fetch.php?media=r:amelioration:metaprogr2017.pdf>
+
+
+
+## Assignation d'un evaleur à un nom avec assign
+
+```{r asign}
+
+# approche classique
+obj <- 1 
+
+# quand on a une chaine de caractere
+nom  <-  "nomObjet"
+assign(x  =  nom,  value  =  1)
+
+
+# dans une loop
+for  (i  in  1:5)  {
+assign(x  =  paste0("obj",  i),  value  =  1:i)
+}
+
+```
+
+
+## Retour à la valeur assignée à un nom avec get
+```{r get}
+
+
+# classique
+nomObjet
+
+# quand on ne connait pas  le nom
+get(nom)
+
+# a comparer à :
+nom
+
+```
+
+## Appel d'une fonction avec do.call
+
+```{r do call}
+median(x  =  1:10)
+
+get("median")(x  =  1:10)
+
+do.call("median",  args  =  list(x  =  1:10))
+
+
+choixstat  <-  function(x,  choix  =  c("table",  "mean",  "median",  "sd",  "mad"),
+retirerNA  =  TRUE)  {
+  choix  <-  match.arg(choix)
+  arguments  <-  list(x)
+  if  (choix  ==  "table"){
+    arguments$useNA  <-  if  (retirerNA)  "no"  else  "ifany"
+  }  else  {
+  arguments$na.rm  <-  retirerNA
+  }
+  do.call(what  =  choix,  args  =  arguments)
+}
+```
+
+## Fonction quote
+```{r quote}
+
+out_quote  <-  quote(median(x  =  1:10))
+out_quote
+
+
+eval(out_quote)
+
+```
+
+
+
