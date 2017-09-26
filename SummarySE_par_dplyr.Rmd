@@ -1,0 +1,155 @@
+---
+title: "Comment est calculé l'IC de summarySE"
+author: "Claire Della Vedova"
+date: "2 juin 2017"
+output: html_document
+---
+
+```{r library}
+library(tidyverse)
+library(boot)
+```
+
+
+
+### Avec de données de comptage
+
+```{r data integer}
+n1=20
+n2=30
+y1 <-rpois(n1,20)
+y2 <-rpois(n2,200)
+g1 <- rep("g1",n1)
+g2 <- rep("g2", n2)
+
+y<-c(y1,y2)
+g<-c(g1,g2)
+
+mydf_int<-data.frame(y=y,g=g)
+str(mydf_int)
+
+
+
+library(Rmisc)
+summarySE(mydf_int,measurevar="y", groupvars="g", na.rm=TRUE)
+
+
+## summarySE avec dplyr
+mydf_int %>%
+  group_by(g) %>%
+  dplyr::summarise(N=n(),
+            mean=mean(y), 
+            sd=sd(y),
+            se=sd/sqrt(N),
+            ci=qt(0.975,N-1)*se)
+
+```
+
+
+L'intervalle de confiance est calculé à partir du quantile de probabilité 0.975 et de N-1 degrés de liberté.
+D'aprés les résultats pour g1, la moyenne est comprise entre 17.08 et 21.51, et pour g2 la moyenne est comprise entre 17.08 et 21.51, et 199.33 et 207.33
+
+Est ce que cette façon de calculer l'IC pose problème quand la variable aléatoire suit une loi de distribution de Poisson ?
+Peut être que, dans ce cas d'une distribution de poisson, la moyenne est quand même distribué selon une loi de Student. Cependant, sans doute que le sd est alors mal calculé, car le ad d'une loi de poisson = moyenne.
+
+On va donc estimer les IC par bootstrap pour voir ce que cela donne.
+
+
+### Estimation de l'IC de la moyenne de variable aléatoire de type comptage, par bootstrap
+```{r bootstrapIC}
+
+
+moyenne<-function(data,indice)                       
+{                       
+    data.star<-data[indice]                   
+    moy<-mean(data.star,na.rm=TRUE)                   
+}                       
+
+
+b1 <- boot(mydf_int$y[mydf_int$g=="g1"], statistic= moyenne, R=4999)                       
+boot.ci(b1)
+
+b2 <- boot(mydf_int$y[mydf_int$g=="g2"], statistic= moyenne, R=4999)                       
+boot.ci(b2)   
+
+
+```
+
+
+Les résultats sont trés cohérents. Donc on peut estimer l'IC de la moyenne d'une variable suivant une distribution de poisson, en utilisant un quantile de la loi de Student. C'est la moyenne qui doit compter.
+
+### Comparaison des IC obtenus en utilisant le quantile de la loi de Student et l'approcha bootstrap sur de petit échantillons N1=5 et N2=10
+
+```{r comparaisonIC}
+
+n3=5
+n4=10
+y3 <-rpois(n3,20)
+y4 <-rpois(n4,200)
+g3 <- rep("g3",n3)
+g4 <- rep("g4", n4)
+
+Y<-c(y3,y4)
+G<-c(g3,g4)
+
+mydf_int2<-data.frame(Y=Y,G=G)
+str(mydf_int2)
+
+
+## en utilisant le quantile de Student
+summarySE(mydf_int2,measurevar="Y", groupvars="G", na.rm=TRUE)
+
+
+
+## en utilisant une approche bootstrap
+b3 <- boot(mydf_int2$Y[mydf_int2$G=="g3"], statistic= moyenne, R=4999)                       
+boot.ci(b3)
+
+b4 <- boot(mydf_int2$Y[mydf_int2$G=="g4"], statistic= moyenne, R=4999)                       
+boot.ci(b4)   
+
+
+```
+
+
+D'aprés la fonction summarySE, l'IC de la moyenne du g3 est : [15.7 ; 25.09] pour [15.6 ; 22.4] d'apres le BCa du bootstrap.
+
+D'aprés la fonction summarySE, l'IC de la moyenne du g4 est : [187.68 ; 203.92] pour [189.1 ; 202.5] d'apres le BCa du bootstrap.
+
+Donc globalement, on peut utiliser les estimation de la fonction summarySE.
+La moyenne d'une variable aléatoire distribuée selon une loi de Poisson suit une loi de Student de moyenne m et d'écart type = sd\racine(n-1); sd étant calculé classiquement.
+
+
+
+## Est ce qu'on pourrait obtenir un IC à partir d'un glm ?
+
+```{r glm}
+
+# estimation des moyenne obs
+with(mydf_int, tapply(y,g, mean))
+
+# glm
+glm1 <- glm(y~g, data=mydf_int, family=poisson)
+summary(glm1)
+
+
+# on obtient les mêmes estimations des moyennes avec le glm
+exp(2.96269)
+exp(2.96269+2.34574)
+
+
+# on veut avoir les estimation en absolu
+glm2 <- glm(y~g-1, data=mydf_int, family=poisson)
+summary(glm2)
+
+exp(confint(glm2))
+
+# rappel des estimation avec summarySE
+summarySE(mydf_int,measurevar="y", groupvars="g", na.rm=TRUE)
+
+
+```
+D'aprés les résultats pour g1, la moyenne est comprise entre 17.08 et 21.51, et pour g2 la moyenne est comprise entre 17.08 et 21.51, et 199.33 et 207.33
+
+On peut donc faire des IC ultra précis, en remplaçant les valeurs de ci du summarySE par les valeurs de exp(confint(glm2))
+

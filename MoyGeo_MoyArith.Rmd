@@ -1,0 +1,37 @@
+---
+title: "Moyenne géommetrique et moyenne arithmétique"
+author: "Claire Della Vedova"
+date: "12 septembre 2017"
+output: html_document
+---
+
+```{r}
+
+x <- c(1:10)
+x
+```
+
+## Moyenne arithmétique
+
+```{r moy arith}
+
+MoyArith <- mean(x)
+MoyArith
+```
+
+La moyenne arithmétique = `r MoyArith`
+
+## Moyenne géométrique
+
+```{r moy geom}
+
+
+log10_x <- log10(x)
+Moy_log10_x <- mean(log10_x)
+Moy_log10_x
+
+MoyGeo <- 10^Moy_log10_x
+MoyGeo
+```
+
+La moyenne géométrique = `r MoyGeo`

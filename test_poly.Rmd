@@ -1,0 +1,159 @@
+
+---
+title: "Signification des p-value des modÃ¨les poly"
+author: "Claire Della Vedova"
+date: "23/05/17"
+output: html_document
+---
+
+
+
+
+
+
+
+```{r  global_options, results='hide'}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE,
+  warning = FALSE,fig.height=20, fig.width=20 )
+
+Sys.setlocale("LC_TIME", "French")
+
+#options(encoding = "UTF-8") 
+
+```
+
+```{r  library}
+library(corrplot)
+library(tidyverse)
+library(vegan)
+library(ggplot2)
+library(tidyr)
+library(gplots)
+library(viridis)
+library(Rmisc)
+library(knitr)
+library(multcomp)
+library(gridExtra)
+library(car)
+
+```
+
+
+```{r set myoptions}
+
+myBioM <- c("AChE.T")
+myTime<- c("T3")
+
+
+```
+
+
+
+
+```{r data, echo=TRUE, results='hide'}
+
+
+### Import data
+ab <- read.csv2("D:/ProjetsIRSN/Assistance Stats/ass_indiv/Beatrice Gagnaire/Abeilles/A4/data/AbeilleBioM_270417.csv")
+
+#str(ab)
+
+### filter on desired Time
+filename <-paste0("ab",myTime)# creation du nom de fichier
+tmp <- ab %>% # creation du fichier en l'appelant tmp
+  filter(Time_o==myTime)
+
+assign(filename, tmp) # on assigne le nom désiré au fichier tmp
+
+rm(tmp) # on supprime tmp
+
+
+### select desired bioM
+indBioM <- grep(as.character(myBioM), names(get(filename)))
+dat <- get(filename)[,c(1:7,indBioM)]
+
+
+
+### averaging  analytic sample (variable echantillon)
+# rename le bioM value pour l'averaging
+names(dat)[dim(dat)[2]] <- "value"
+
+dat_avg <- dat %>%
+  group_by(Time_o,DD, DD_o,Time,DoseTot, échantillon ) %>%
+  dplyr::summarise(avg=mean(value, na.rm=TRUE))
+
+# passage de tibble en data frame (pour la modelisation)
+dat_avg <- as.data.frame(dat_avg)
+
+```
+
+## Ajustement des modèles polynomiaux
+
+```{r modeles poly}
+mod_poly4 <- lm(avg~poly(log10(DD),4), data=dat_avg)
+mod_poly3 <- lm(avg~poly(log10(DD),3), data=dat_avg)
+mod_poly2 <- lm(avg~poly(log10(DD),2), data=dat_avg)
+mod_poly1 <- lm(avg~poly(log10(DD),1), data=dat_avg)
+mod_poly0 <- lm(avg~1 ,data=dat_avg)
+
+```
+
+## Sorties du modèle polynomial d'ordre 1
+
+
+```{r sorties poly1}
+
+
+summary(mod_poly0)
+summary(mod_poly1)
+
+
+anova(mod_poly1, mod_poly0)
+```
+
+**La pvalue du model mod_poly1 corerspond à la pvalue du test F entre les modèles constant et linéaire**
+
+## Sorties du modèle polynomial d'ordre 2
+
+
+```{r sorties poly2}
+
+
+summary(mod_poly2)
+
+
+anova(mod_poly2, mod_poly1)
+```
+
+
+**La pvalue associé au 2ème degré (2ème ligne) du modele mod_poly2 corerspond à la pvalue du test F entre les modèles linéaire et quadratique**
+
+
+
+## Sorties du modèle polynomial d'ordre 3
+
+```{r sorties poly3}
+
+
+summary(mod_poly3)
+
+
+anova(mod_poly3, mod_poly2)
+```
+
+**La pvalue associé au 3ème degré (3ème ligne) du modele mod_poly3 corerspond à la pvalue du test F entre les modèles cubique et quadratique**
+
+
+## Sorties du modèle polynomial d'ordre 4
+
+```{r sorties poly4}
+
+
+summary(mod_poly4)
+
+
+anova(mod_poly4, mod_poly3)
+```
+
+
+**La pvalue associé au 4ème degré (4ème ligne) du modele mod_poly4 corerspond à la pvalue du test F entre les modèles de degrés 4 et cubique**
