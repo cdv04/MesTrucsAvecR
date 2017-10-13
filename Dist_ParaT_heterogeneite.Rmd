@@ -1,0 +1,158 @@
+---
+title: "Dist_ParaT_heterogeneite"
+author: "Claire Della Vedova"
+date: "13 octobre 2017"
+output: html_document
+---
+
+
+
+```{r global_options}
+
+knitr::opts_chunk$set (echo=FALSE, message=FALSE, warning=FALSE)
+
+
+```
+
+```{r package}
+
+library(boot)
+library(ggplot2)
+
+```
+
+
+
+## Sous l'hypothèse H0 d'agalité des moyennes, et cas d'homogénéité des variance
+
+```{r data_homo}
+
+x1 <- rnorm(100,0,1)
+x2 <- rnorm(100,0,1)
+
+
+```
+
+
+```{r moyenne}
+
+moy_var <- function (data, indice) {
+  
+  data_star <- data[indice]
+  moy <- mean(data_star)
+  var <- var (data_star)
+  c(moy, var)
+}
+  
+
+
+```
+
+```{r boostrap}
+
+b1 <- boot(x1, statistic=moy_var, R=1000)
+para1_star <- b1$t
+
+b2 <- boot(x2, statistic=moy_var, R=1000)
+para2_star <- b2$t
+
+
+para_star <- data.frame(m1=para1_star[,1], var1 =para1_star[,2],m2=para2_star[,1], var2 =para2_star[,2] )
+
+para_star$d_m <- para_star$m1 - para_star$m2
+
+N <- nrow(para_star)
+para_star$s2 <- ((N-1) * para_star$var1 + (N-1) * para_star$var2)/(N+N-2) 
+para_star$T <- para_star$d_m / para_star$s2
+
+
+```
+
+
+```{r plot_homo}
+
+
+ggplot(para_star, aes(x=d_m))+
+  geom_density()
+
+
+gT_homo <- ggplot(para_star, aes(x=T))+
+  geom_density()
+
+plot(gT_homo)
+```
+
+```{r qt97.5%}
+
+quantile (para_star$T, 0.975)
+
+
+```
+
+
+## Sous l'hypothèse H0 d'agalité des moyennes, et en cas d'hétérogénéité des variance
+
+```{r data_hetero}
+
+x11 <- rnorm(100,0,2)
+x22 <- rnorm(100,0,1)
+
+
+```
+
+
+
+```{r boostrap2}
+
+b11 <- boot(x11, statistic=moy_var, R=1000)
+para11_star <- b11$t
+
+b22 <- boot(x22, statistic=moy_var, R=1000)
+para22_star <- b22$t
+
+
+para_star2 <- data.frame(m1=para11_star[,1], var1 =para11_star[,2],m2=para22_star[,1], var2 =para22_star[,2] )
+
+para_star2$d_m <- para_star2$m1 - para_star2$m2
+
+N <- nrow(para_star2)
+para_star2$s2 <- ((N-1) * para_star2$var1 + (N-1) * para_star2$var2)/(N+N-2) 
+para_star2$T <- para_star2$d_m / para_star2$s2
+
+
+```
+
+
+```{r plot_hetero}
+
+
+ggplot(para_star2, aes(x=d_m))+
+  geom_density()
+
+
+gT_hetero <- ggplot(para_star2, aes(x=T))+
+  geom_density()
+
+plot(gT_hetero)
+
+```
+
+```{r qt97.5%}
+
+quantile (para_star2$T, 0.975)
+
+
+```
+
+```{r}
+library(gridExtra)
+grid.arrange(gT_homo, gT_hetero)
+
+# il faudrait leur mettre la même echelle en x pour pouvoir les comparer
+# En cas d'homogénéité, il faut dépasser T=0.17 pour rejeter l'égalité des moyennes
+# En cas d'hétérogénéité, il faudrait dépasser 0.23, mais si on dépasse 0.17 on va considérer que les moyennes ne sont pas homogènes. C'est pour cela que le risque alpha de 5% n'est pas conservée. Car le limite de 0.17 correspond à une probabilité supérieure à 0.05 dans le cas d'une hétérogénéité
+```
+
+
+
+
