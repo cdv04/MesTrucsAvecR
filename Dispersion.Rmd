@@ -1,0 +1,30 @@
+---
+title: "Dipersion"
+author: "cdv"
+date: "25 octobre 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r disp2}
+
+
+
+x2 <- seq(2,20, by=2)
+x3 <- seq(3,30, by=3)
+x4 <- seq(4,40, by=4)
+x5 <- seq(5,50, by=5)
+
+
+var(x2)
+var(x3)
+var(x4)
+var(x5)
+
+```
+
