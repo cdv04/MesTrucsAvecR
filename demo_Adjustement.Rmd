@@ -1,0 +1,117 @@
+---
+title: "Demo_Adjustement"
+author: "CDV"
+date: "04 janvier 2016"
+output: html_document
+---
+
+
+```{r, package}
+
+library(ggplot2)
+library(gridExtra)
+library(car)
+library(effects)
+```
+
+
+## Data simulation
+```{r, data}
+set.seed(12)
+Smoke<-seq(0,50, length.out=100) 
+a1=80
+b1=-1.5
+RespCap<- a1 + b1 *Smoke+rnorm(100,20,10)
+
+Mint<-Smoke/2+15+rnorm(100,10,14)
+mydata<-data.frame(RespCap,Mint,Smoke)
+#head(mydata[,1:2])
+
+```
+
+
+
+
+## Exploring Mint and Respiratory capacities relationship
+```{r mod 1, echo=TRUE}
+# display data
+head(mydata[,1:2])
+
+# plot Respiratory capacities vs Mint
+ggplot(mydata, aes(x=Mint,y=RespCap))+
+  geom_point(size=4)
+
+# resgression
+mod1<-lm(RespCap~Mint, data=mydata)
+
+
+summary(mod1)
+par(mfrow=c(2,2))
+plot(mod1)
+
+# plot Respiratory capacities vs Mint
+xmin<-min(mydata$Mint)
+xmax<-max(mydata$Mint)
+predicted<-data.frame(Mint=seq(xmin,xmax, length.out=100))
+predicted$Mint<-predict(mod1,predicted)
+
+ggplot(mydata, aes(x=Mint,y=RespCap))+
+  geom_point(size=4)+
+  geom_smooth(method="lm")
+
+
+plot(allEffects(mod1))
+```
+
+
+Mint has a significant negative effect on respiratory capacities.
+
+## Exploring Mint and Respiratory capacities relationship taking in acount Smoke
+```{r mod 2, echo=TRUE, message=FALSE, warning=FALSE}
+# display data
+head(mydata)
+
+# plot Respiratory capacities vs Mint
+ggplot(mydata, aes(x=Mint,y=RespCap, fill=Smoke))+
+  geom_point(size=4, shape=21)+
+  scale_fill_gradient2(low="green", mid="yellow",high="red", midpoint=25)
+
+# check for multicollinearity
+with(mydata, cor(Mint,Smoke))
+
+# resgression
+mod2<-lm(RespCap~Mint+Smoke, data=mydata)
+vif(mod2)
+
+summary(mod2)
+par(mfrow=c(2,2))
+plot(mod2)
+
+plot(allEffects(mod2))
+
+```
+
+Mint has no more a significant effect.
+So the effect we saw was caused by Smoke and the correlation between Smoke and Mint.
+
+
+
+## Exploring Smoke and Respiratory capacities 
+```{r mod 3, echo=FALSE}
+
+# plot Respiratory capacities vs Mint
+ggplot(mydata, aes(x=Smoke,y=RespCap))+
+  geom_point(size=4)+
+  geom_smooth(method="lm")
+
+# resgression
+mod3<-lm(RespCap~Smoke, data=mydata)
+
+summary(mod3)
+par(mfrow=c(2,2))
+plot(mod3)
+```
+
+Smoke has a very significant negative impact on Respiratory capacities !
+
+
