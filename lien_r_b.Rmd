@@ -1,0 +1,92 @@
+---
+title: "Correlation_Regression"
+author: "Claire Della Vedova"
+date: "`substr(Sys.time(), 1, 10)`"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+
+
+x <- rnorm(30,15,2)
+sd(x)
+y<-rnorm(30,150,5)
+sd(y)
+b <- y/x
+sd(b)
+sd(y)/sd(x)
+df<-data.frame(x,y)
+```
+
+```{r}
+library(ggplot2)
+ggplot(df, aes(x=x, y=y))+
+  geom_point()+
+  geom_rug()
+
+
+
+```
+
+```{r}
+# library(mvtnorm)
+# rmvnorm
+a1=2
+b1=5
+x1 <- rnorm(30,15,2)
+y1 <- a1 +b1*x1+rnorm(30,0,2)
+df1 <- data.frame(x1,y1)
+
+ggplot(df1, aes(x=x1, y=y1))+
+  geom_point()+
+  geom_rug()
+
+sd(y1)
+sd(x1)
+r1 <-cor.test(y1,x1)$estimate
+b1 <- coef(lm(y1~x1, data=df1))[2]
+
+###------------------------------
+# b=10
+### -----------------------------
+
+b2=10
+a2=2
+x2 <- rnorm(30,15,2)
+y2 <- a2 +b2*x2+rnorm(30,0,2)
+df2 <- data.frame(x2,y2)
+
+ggplot(df2, aes(x=x2, y=y2))+
+  geom_point()+
+  geom_rug()
+
+sd(y2)
+sd(x2)
+r2 <-cor.test(y2,x2)$estimate
+b2 <- coef(lm(y2 ~ x2, data=df2))[2]
+
+
+###------------------------------
+# b=2
+### -----------------------------
+
+b3=1
+a3=2
+x3 <- rnorm(30,15,2)
+y3 <- a3 +b3*x3+rnorm(30,0,2)
+df3 <- data.frame(x3,y3)
+
+ggplot(df3, aes(x=x3, y=y3))+
+  geom_point()+
+  geom_rug()
+
+sd(y3)
+sd(x3)
+r3 <-cor.test(y3,x3)$estimate
+b3 <- coef(lm(y3 ~ x3, data=df3))[2]
+r3
+b3
+
+```
