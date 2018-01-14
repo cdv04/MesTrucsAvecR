@@ -1,0 +1,66 @@
+---
+title: "ComparaisonsMultiples"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+
+setosa <- data.frame(iris %>%
+  filter(Species=="setosa")%>%
+  sample_n(40, replace=FALSE))
+  
+
+virginica <- data.frame(iris %>%
+  filter(Species=="virginica")%>%
+  sample_n(30, replace=FALSE))
+
+versicolor<- data.frame(iris %>%
+  filter(Species=="versicolor") %>%
+  sample_n(20, replace=FALSE))
+  
+
+  
+my_iris <- rbind(setosa, virginica, versicolor)    
+```
+
+
+```{r}
+avg <- my_iris %>%
+	group_by(Species) %>%
+	summarise(avg=mean(Sepal.Length))
+
+```
+
+
+
+```{r}
+
+mod_lm <- lm(Sepal.Length~Species, data=my_iris)
+mod_aov <- aov(Sepal.Length~Species, data=my_iris)
+
+```
+
+```{r}
+library(lsmeans)
+lsmeans(mod_aov, "Species")
+```
+
+```{r}
+TukeyHSD(mod_aov)
+
+
+```
+
+
+```{r}
+library(multcomp)
+summary(glht(mod_lm, mcp(Species="Tukey")))
+```
+
